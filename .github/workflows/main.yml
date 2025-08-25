@@ -26,8 +26,8 @@ jobs:
         run: composer install
 
       - name: Run migrations
-        run: php artisan migrate
-        continue-on-error: true
+        run: php artisan migrate --verbose
+        # continue-on-error: true
 
       - name: Test PHPStan
         run: ./vendor/bin/phpstan analyse

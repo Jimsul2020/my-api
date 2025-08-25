@@ -1,4 +1,4 @@
-name: Build, Test and deploy
+name: Build, Test and Deploy
 
 on:
   push:
@@ -7,6 +7,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: api
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,23 +31,25 @@ jobs:
         with:
           php-version: 8.3
 
-      - name: Create database
-        run: touch ./database/database.mysql
-
       - name: Copy .env
         run: cp .env.test .env
 
-      - name: Install app
-        run: composer install
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Wait for MySQL
+        run: |
+          sudo apt-get install -y mysql-client
+          until mysqladmin ping -h127.0.0.1 -uroot --silent; do
+            echo "Waiting for MySQL..."
+            sleep 5
+          done
 
       - name: Run migrations
-        run: php artisan migrate --verbose
-        # continue-on-error: true
+        run: php artisan migrate --force
 
       - name: Test PHPStan
         run: ./vendor/bin/phpstan analyse
-        continue-on-error: true
 
       - name: Test PHPUnit
         run: ./vendor/bin/phpunit
-        continue-on-error: true

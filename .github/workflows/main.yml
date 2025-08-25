@@ -2,17 +2,19 @@ name: Build, Test and deploy
 
 on:
   push:
-    branchs: [main]
+    branches: [main]
 
 jobs:
   build:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        with: php-version 8.3
+        with:
+          php-version: 8.3
 
       - name: Create database
         run: touch ./database/database.mysql
